@@ -31,8 +31,8 @@ namespace CreatePluginFromTemplate.Automation
 
     class UFileImportGroupSettings
     {
-        public bool bUpdateSkeletonReferencePose = true;
-        public bool bUseT0AsRefPose = true;
+        public bool bUpdateSkeletonReferencePose = false;
+        public bool bUseT0AsRefPose = false;
         public bool bPreserveSmoothingGroups = true;
         public bool bImportMeshesInBoneHierarchy = true;
         public bool bImportMorphTargets = true;
@@ -82,6 +82,12 @@ namespace CreatePluginFromTemplate.Automation
 
         [Option('e', "characterdescription", Required = false, HelpText = "Description for the character.")]
         public string CharacterDescription { get; set; }
+
+        [Option('o', "outputdestination", Required = false, HelpText = "Destination to which to copy the package file.")]
+        public string OutputDestination { get; set; }
+
+        [Option('b', "build package", Default = false, Required = false, HelpText = "If included, builds package.")]
+        public bool BuildPackage { get; set; }
 
         public string GetUprojectPath()
         {
@@ -141,7 +147,10 @@ namespace CreatePluginFromTemplate.Automation
             GenerateCharacterImportSettingsFile(null, null, opts);
             RunGenerateProjectFilesProcess(null, null, opts);
             RunCharacterImportProcess(null, null, opts);
-            RunBuildDlcPackageProcess(null, null, opts);
+            if (opts.BuildPackage)
+            {
+                RunBuildDlcPackageProcess(null, null, opts);
+            }
 
             Console.WriteLine("Press any key to continue...");
             Console.ReadKey();
@@ -162,6 +171,7 @@ namespace CreatePluginFromTemplate.Automation
 
             UFileImportGroup Textures = new UFileImportGroup();
             Textures.GroupName = "Textures";
+            Textures.FactoryName = "TextureFactory";
             Textures.Filenames = new string[] { opts.CharactersDirectory + "\\" + opts.CharacterName + "\\" + opts.CharacterName + "_body_derm.png", opts.CharactersDirectory + "\\" + opts.CharacterName + "\\" + opts.CharacterName + "_body_displ.png" };
             Textures.Destinationpath = "/" + opts.PluginName + "/Textures/";
 
