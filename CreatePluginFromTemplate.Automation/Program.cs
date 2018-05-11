@@ -8,6 +8,7 @@ using System.Diagnostics;
 using Newtonsoft.Json;
 using CommandLine;
 using System.Threading;
+using System.ComponentModel;
 
 namespace CreatePluginFromTemplate.Automation
 {
@@ -98,6 +99,9 @@ namespace CreatePluginFromTemplate.Automation
         [Option('b', "build package", Default = false, Required = false, HelpText = "If included, builds package.")]
         public bool BuildPackage { get; set; }
 
+        // EXAMPLE USAGE
+        // CreatePluginFromTemplate.Automation.exe -p "D:\Unreal Projects\CharacterPackager" -r CharacterPackager.uproject -u "D:\Program Files\Epic Games\UE_4.19" -c "BigHeadedGentleman" -d "C:\Blender\blender-2.79-windows64\2.79\scripts\addons\easy_bastioni_lab\exports" -e "This is not bob." -s "Skeleton'/Game/MaleCaucasianAthletic/Male_Caucasian_Athletic_Skeleton.Male_Caucasian_Athletic_Skeleton'" -b
+
         public string GetUprojectPath()
         {
             return ProjectDirectory + "\\" + UprojectName;
@@ -127,6 +131,13 @@ namespace CreatePluginFromTemplate.Automation
                 opts.UnrealDirectory = opts.UnrealDirectory.Replace("\"", "");
             if (opts.PluginName != null)
                 opts.PluginName = opts.PluginName.Replace("\"", "");
+
+            foreach (PropertyDescriptor descriptor in TypeDescriptor.GetProperties(opts))
+            {
+                string name = descriptor.Name;
+                object value = descriptor.GetValue(opts);
+                Console.WriteLine("{0}={1}", name, value);
+            }
 
             double seconds = DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
             string packageName = "C" + seconds.ToString().Replace(".", "");
@@ -161,8 +172,8 @@ namespace CreatePluginFromTemplate.Automation
                 RunBuildDlcPackageProcess(null, null, opts);
             }
 
-            Console.WriteLine("Press any key to continue...");
-            Console.ReadKey();
+            //Console.WriteLine("Press any key to continue...");
+            //Console.ReadKey();
         }
 
         private static void GenerateCharacterImportSettingsFile(object sender, EventArgs e, Options opts)
@@ -171,7 +182,18 @@ namespace CreatePluginFromTemplate.Automation
 
             UFileImportGroup SkeletalMesh = new UFileImportGroup();
             SkeletalMesh.GroupName = "SkeletalMesh";
-            SkeletalMesh.Filenames = new string[] { opts.CharactersDirectory + "\\" + opts.CharacterName + "\\" + opts.CharacterName + ".fbx" };
+            List<string> files = new List<string>();
+            //files.Add(opts.CharactersDirectory + "\\" + opts.CharacterName + "\\" + opts.CharacterName + ".fbx");
+
+            // now loads all files, including files marked as clothing
+            foreach (string s in Directory.GetFiles(opts.CharactersDirectory + "\\" + opts.CharacterName + "\\"))
+            {
+                if (s.EndsWith(".fbx"))
+                {
+                    files.Add(s);
+                }
+            }
+            SkeletalMesh.Filenames = files.ToArray();
             SkeletalMesh.Destinationpath = "/" + opts.PluginName + "/SkeletalMeshes/";
             if (opts.SkeletonAsset != null)
             {
